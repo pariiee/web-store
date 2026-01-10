@@ -469,7 +469,7 @@
 
             <div class="border-t border-zinc-800 pt-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center text-xs">
                 <p class="mb-4 md:mb-0">&copy; 2025 PARI ID. Hak Cipta Dilindungi Undang-Undang. Seluruh konten dan layanan merupakan properti dari PARI ID.</p>
-                <p class="text-zinc-500">v2.1.0</p>
+                <p class="text-zinc-500">v1.0</p>
             </div>
         </div>
     </footer>
