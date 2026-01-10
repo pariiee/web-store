@@ -20,6 +20,7 @@ use App\Http\Controllers\Guest\InformationController;
 use App\Http\Controllers\Guest\TransferController;
 use App\Http\Controllers\Guest\TopBuyerController;
 use App\Http\Controllers\TopupController;
+use App\Http\Controllers\WebhookDeployController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,13 @@ Route::get('/price-list', [LandingController::class, 'priceList'])
 Route::get('/p/{product:slug}', [ProductViewController::class, 'show'])
     ->name('product.show');
 
+/*
+|--------------------------------------------------------------------------
+| WEBHOOK ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::post('/webhook/github/deploy', WebhookDeployController::class)
+    ->middleware(['throttle:5,1']);
 
 Route::post('/devtools-detected', function () {
 

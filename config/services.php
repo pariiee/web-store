@@ -6,6 +6,10 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+'github' => [
+    'webhook_secret' => env('GITHUB_WEBHOOK_SECRET'),
+],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -19,7 +23,7 @@ return [
         ],
     ],
 
-    // ✅ TELEGRAM (biar aman walau config:cache)
+  
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'gc_admin'  => env('TELEGRAM_GC_ADMIN'),
