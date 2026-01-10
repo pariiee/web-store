@@ -139,6 +139,14 @@ class CheckoutController extends Controller
                 $qtyText   = $qty;
 
                 $dataInputsText = $this->formatCustomerInputs($customerInputs);
+                
+                // Format username Telegram dengan @ jika ada
+                $teleUsername = '';
+                if (!empty($user->nama_tele)) {
+                    // Hapus @ di depan jika sudah ada
+                    $cleanTele = ltrim($user->nama_tele, '@');
+                    $teleUsername = "https://t.me/{$cleanTele}";
+                }
 
                 $captionAdmin =
                     "TOR MONITORR ADMIN\n\n" .
@@ -146,7 +154,8 @@ class CheckoutController extends Controller
                     "JUMLAH YANG DI BELI: {$qtyText}\n\n" .
                     "DATA YANG DI ISI:\n{$dataInputsText}\n\n" .
                     "NAMA AKUN: {$user->name}\n" .
-                    "NOMER WHATSAPP: {$user->whatsapp}";
+                    "NOMER WHATSAPP: {$user->whatsapp}\n" .
+                    "TELEGRAM: [@{$user->nama_tele}]({$teleUsername})";
 
                 // 1) GC ADMIN (photo thumbnail kalau ada, fallback tq.webp)
                 if ($gcAdmin) {
@@ -209,6 +218,7 @@ class CheckoutController extends Controller
             ->post("https://api.telegram.org/bot{$token}/sendPhoto", [
                 'chat_id' => $chatId,
                 'caption' => $caption,
+                'parse_mode' => 'Markdown', // Ditambahkan untuk format Markdown
             ]);
 
         \Log::info("TELEGRAM ADMIN RESP", ['ok' => $res->ok(), 'body' => $res->body()]);
@@ -228,6 +238,7 @@ class CheckoutController extends Controller
             ->post("https://api.telegram.org/bot{$token}/sendPhoto", [
                 'chat_id' => $chatId,
                 'caption' => $caption,
+                'parse_mode' => 'Markdown', // Ditambahkan untuk format Markdown
             ]);
 
         \Log::info("TELEGRAM LOGS RESP", ['ok' => $res->ok(), 'body' => $res->body()]);
