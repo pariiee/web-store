@@ -52,7 +52,7 @@
             <!-- Input Login -->
             <div>
                 <label class="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5 ml-1">
-                    Email / Username Telegram / WhatsApp
+                    Username Telegram / WhatsApp (PILIH SALAH SATU)
                 </label>
                 <div class="relative group">
                     <span class="absolute left-4 top-3.5 text-zinc-400 group-focus-within:text-green-600 transition-colors">
@@ -61,7 +61,7 @@
                         </svg>
                     </span>
                     <input type="text" name="login" required 
-                           placeholder="username / email@ayastore.com / 08xx" 
+                           placeholder="username /08xx" 
                            value="{{ old('login') }}" 
                            class="w-full pl-12 pr-4 py-3.5 bg-zinc-50/50 border border-zinc-200 rounded-xl text-sm font-bold text-zinc-900 focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white outline-none transition-all">
                 </div>
