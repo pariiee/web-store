@@ -18,9 +18,6 @@ class BuktiGaransiController extends Controller
     {
         $user = auth()->user();
 
-        // ===============================
-        // ITEM UNTUK BUKTI LOGIN (24 JAM)
-        // ===============================
         $transactionItems = TransactionItem::whereHas('transaction', fn ($q) =>
                 $q->where('user_id', $user->id)
             )
@@ -30,9 +27,6 @@ class BuktiGaransiController extends Controller
             ->latest()
             ->get();
 
-        // ===============================
-        // ITEM UNTUK GARANSI (30 HARI)
-        // ===============================
         $itemsForGaransi = BuktiLogin::where('user_id', $user->id)
             ->validForGaransi()
             ->whereDoesntHave('claimGaransi')
@@ -70,7 +64,6 @@ class BuktiGaransiController extends Controller
             ->whereDoesntHave('buktiLogins')
             ->firstOrFail();
 
-        // 🔐 VALIDASI 24 JAM
         if (! $item->isStillValid24Hours()) {
             return back()->withErrors('Batas waktu upload bukti login sudah lewat 24 jam.');
         }
@@ -92,34 +85,29 @@ class BuktiGaransiController extends Controller
         ]);
 
         $tanggal = Carbon::now()->translatedFormat('d F Y');
+        $teleLink = $user->nama_tele ? "https://t.me/" . ltrim($user->nama_tele, '@') : '-';
 
-       $this->sendTelegram(
-    env('TELEGRAM_GC_BUKTI_LOGIN'),
-    "📌 *BUKTI LOGIN*\n"
-    ."━━━━━━━━━━━━━━━━━━━\n\n"
-
-    ."📦 *Detail Akun*\n"
-    ."• *Item*        : {$item->item->name}\n"
-    ."• *Email*       : {$bukti->email_akun}\n"
-    ."• *Nama Buyer*  : {$bukti->nama_buyer}\n"
-    ."• *Tipe Akun*   : {$bukti->tipe_akun}\n"
-    ."• *Durasi*      : {$bukti->durasi}\n\n"
-
-    ."📱 *Informasi Penggunaan*\n"
-    ."• *Device*     : {$bukti->device}\n"
-    ."• *Lokasi*     : {$bukti->lokasi}\n"
-    ."• *Penggunaan* : {$bukti->penggunaan}\n"
-    ."• *Tanggal*    : {$tanggal}\n\n"
-
-    ."━━━━━━━━━━━━━━━━━━━\n"
-   ."👤 *Pelapor*\n"
-."• *Nama*      : {$user->name}\n"
-."• *Telegram*  : [@{$user->nama_tele}]({$teleUsername})\n"
-."• *WhatsApp*  : {$user->whatsapp}\n",
-    
-    $path
-);
-
+        $this->sendTelegram(
+            env('TELEGRAM_GC_BUKTI_LOGIN'),
+            "📌 *BUKTI LOGIN*\n"
+            ."━━━━━━━━━━━━━━━━━━━\n\n"
+            ."📦 *Detail Akun*\n"
+            ."• *Item*       : {$item->item->name}\n"
+            ."• *Email*      : {$bukti->email_akun}\n"
+            ."• *Nama Buyer* : {$bukti->nama_buyer}\n"
+            ."• *Tipe Akun*  : {$bukti->tipe_akun}\n"
+            ."• *Durasi*     : {$bukti->durasi}\n\n"
+            ."📱 *Penggunaan*\n"
+            ."• *Device*     : {$bukti->device}\n"
+            ."• *Lokasi*     : {$bukti->lokasi}\n"
+            ."• *Mode*       : {$bukti->penggunaan}\n"
+            ."• *Tanggal*    : {$tanggal}\n\n"
+            ."👤 *Pelapor*\n"
+            ."• *Nama* : {$user->name}\n"
+            ."• *Telegram* : ".($user->nama_tele ? "[@{$user->nama_tele}]($teleLink)" : "-")."\n"
+            ."• *WhatsApp* : {$user->whatsapp}",
+            $path
+        );
 
         return back()->with('success', 'Bukti login berhasil dikirim.');
     }
@@ -152,15 +140,11 @@ class BuktiGaransiController extends Controller
             return back()->withErrors('Item ini sudah pernah diklaim.');
         }
 
-        
         if (! $bukti->isStillValid30Days()) {
-            return back()->withErrors('Masa klaim garansi sudah berakhir (30 hari).');
+            return back()->withErrors('Masa klaim garansi sudah berakhir.');
         }
 
         $path = $request->file('image')->store('klaim-garansi', 'public');
-
-        $tanggalOrder = $bukti->transactionItem->created_at->translatedFormat('d F Y');
-        $tanggalMasalah = Carbon::now()->translatedFormat('d F Y');
 
         $garansi = ClaimGaransi::create([
             'user_id' => $user->id,
@@ -178,51 +162,43 @@ class BuktiGaransiController extends Controller
             'image_path' => $path,
         ]);
 
+        $teleLink = $user->nama_tele ? "https://t.me/" . ltrim($user->nama_tele, '@') : '-';
+
         $this->sendTelegram(
-    env('TELEGRAM_GC_GARANSI'),
-    "🚨 *KLAIM GARANSI*\n"
-    ."━━━━━━━━━━━━━━━━━━━\n\n"
-
-    ."📦 *Detail Item*\n"
-    ."• *Nama Item*        : {$bukti->transactionItem->item->name}\n"
-    ."• *Tanggal Order*    : {$tanggalOrder}\n"
-    ."• *Tanggal Bermasalah*: {$tanggalMasalah}\n"
-    ."• *Sisa Durasi*      : {$garansi->sisa_durasi}\n\n"
-
-    ."🔐 *Data Akun*\n"
-    ."• *Email*    : {$garansi->email_akun}\n"
-    ."• *Password* : {$garansi->password_akun}\n"
-    ."• *Device*   : {$garansi->device}\n"
-    ."• *Lokasi*   : {$garansi->lokasi}\n"
-    ."• *Penggunaan*: {$garansi->penggunaan}\n\n"
-
-    ."🛠 *Permasalahan*\n"
-    ."```{$garansi->permasalahan}```\n\n"
-
-    ."━━━━━━━━━━━━━━━━━━━\n"
-    ."👤 *Pelapor*\n"
-."• *Nama*     : {$user->name}\n"
-."• *Telegram* : [@{$user->nama_tele}]({$teleUsername})\n"
-."• *Jabatan*  : {$user->role}\n"
-."• *WhatsApp* : {$user->whatsapp}\n",
-
-    $path
-);
-
+            env('TELEGRAM_GC_GARANSI'),
+            "🚨 *KLAIM GARANSI*\n"
+            ."━━━━━━━━━━━━━━━━━━━\n\n"
+            ."📦 *Item* : {$bukti->transactionItem->item->name}\n"
+            ."• *Sisa Durasi* : {$garansi->sisa_durasi}\n\n"
+            ."🛠 *Permasalahan*\n```{$garansi->permasalahan}```\n\n"
+            ."👤 *Pelapor*\n"
+            ."• *Nama* : {$user->name}\n"
+            ."• *Telegram* : ".($user->nama_tele ? "[@{$user->nama_tele}]($teleLink)" : "-")."\n"
+            ."• *WhatsApp* : {$user->whatsapp}",
+            $path
+        );
 
         return back()->with('success', 'Klaim garansi berhasil dikirim.');
     }
 
-    private function sendTelegram(string $chatId, string $caption, string $imagePath)
+    private function sendTelegram(string $chatId, string $caption, string $imagePath): void
     {
-        Http::attach(
-            'photo',
-            Storage::disk('public')->get($imagePath),
-            basename($imagePath)
-        )->post("https://api.telegram.org/bot".env('TELEGRAM_BOT_TOKEN')."/sendPhoto", [
-            'chat_id' => $chatId,
-            'caption' => $caption,
-            'parse_mode' => 'Markdown',
-        ]);
+        try {
+            $response = Http::attach(
+                'photo',
+                Storage::disk('public')->get($imagePath),
+                basename($imagePath)
+            )->post("https://api.telegram.org/bot".env('TELEGRAM_BOT_TOKEN')."/sendPhoto", [
+                'chat_id' => $chatId,
+                'caption' => $caption,
+                'parse_mode' => 'Markdown',
+            ]);
+
+            if (! $response->successful()) {
+                logger()->error('Telegram API Error', $response->json());
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Telegram Exception', ['error' => $e->getMessage()]);
+        }
     }
 }
