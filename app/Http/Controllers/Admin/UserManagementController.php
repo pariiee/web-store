@@ -27,7 +27,7 @@ class UserManagementController extends Controller
             }])
             ->orderBy('role')
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(100);
 
         // Hitung statistik
         $totalUsers = User::whereNull('deleted_at')->count();
@@ -247,7 +247,7 @@ class UserManagementController extends Controller
                 $query->orderBy('created_at', 'desc')->limit(5);
             }])
             ->orderBy('deleted_at', 'desc')
-            ->paginate(20);
+            ->paginate(200);
 
         return view('admin.user_delete', compact('deletedUsers'));
     }
@@ -502,7 +502,7 @@ class UserManagementController extends Controller
                       ->where('year', now()->year);
             }])
             ->orderBy('created_at', 'desc')
-            ->paginate(20)
+            ->paginate(100)
             ->appends(['q' => $search]);
 
         $totalUsers = User::whereNull('deleted_at')->count();
